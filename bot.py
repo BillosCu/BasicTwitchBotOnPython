@@ -1,37 +1,86 @@
 from twitchio.ext import commands, sounds, routines
 import random
 
-bot_name = "vioscobot"
+bot_name = ""
+
 
 class Bot(commands.Bot):
     def __init__(self):
-        super().__init__(token="oauth:1xg24sgrj6mya0459asjd9rmcjmazr", client_secret="17h6hkd3odkvw4hfr1paftbdecv779", prefix="!", initial_channels=["viosco"])
+        super().__init__(token="", client_secret="", prefix="!", initial_channels=[""])
 
+        self.music_queue = []
         self.player = sounds.AudioPlayer(callback=self.player_done)
 
-    async def player_done():
-        print('Finished playing song!')
+    async def player_done(self, ctx):
+        await ctx.send('¡Eso es todo!')
 
     @commands.command()
     async def play(self, ctx, *args):
         text = " ".join(args)
         track = await sounds.Sound.ytdl_search(text)
-        self.player.play(track)
-        print(track)
-        if self.player.is_playing:
+        if not self.player.is_playing:
             await ctx.send(f'Sonando: {track.title}')
         else:
             await ctx.send(f'Luego se pone {track.title}')
+            self.music_queue.append(track)
+
+        self.player.play(track)
+        print(track)
+        print(self.player.is_playing)
+        
 
 
+    @commands.command()
+    async def pause(self, ctx):
+        if self.player.is_playing:
+            self.player.pause()
+            await ctx.reply("Pausado.")
+        else:
+            await ctx.send("No está sonando nada.")
+
+
+    @commands.command()
+    async def stop(self, ctx):
+        if self.player.is_playing:
+            self.player.stop()
+            await ctx.reply("Se paró toda la música.")
+        else:
+            await ctx.send("No hay nada en la lista")
+
+    @commands.command()
+    async def resume(self, ctx):
+        if self.player.is_paused:
+            self.player.resume()
+            await ctx.reply("Se paró toda la música.")
+            self.player.is_playing = True
+            self.player.is_paused = False
     
 
-# Inicializo el Bot ya que no me f
+    @commands.command()
+    async def volume(self, ctx, *args):
+        try:
+            volumen = int(args[0])
+            if volumen>=1 and volumen<=100:
+                self.player.volume = volumen
+                await ctx.send(f"Volumen establecido en {volumen}%")
+            else:
+                await ctx.send("Digite Valores de 1 a 100")
+        except:
+            await ctx.send("No es un número")
+        
+
+
+
+
+
+
+# Inicializo el Bot
 bot = Bot()
 
 @routines.routine(seconds=20, iterations=0)
 async def hello(ctx):
-    await ctx.channel.send(f"/announcepurple ¡Gracias por estar aquí!")
+    await ctx.channel.send("/announcepurple ¡Gracias por estar aquí!")
+    print("/announcepurple ¡Gracias por estar aquí!")
 
 @bot.event()
 async def event_ready():
@@ -40,7 +89,7 @@ async def event_ready():
 
 @bot.event()
 async def event_message(ctx):
-    if ctx.echo:
+    if ctx.echo: #Si es un mensaje del bot, no lo toma en cuenta.
         return
         
 
@@ -78,10 +127,7 @@ async def test(ctx, *args):
 async def bola8(ctx, *args):
     text = " ".join(args)
     choices = ['Sí', 'No', 'Oiganlo', 'No lo sé, tú dime']
-    await ctx.reply(f"/me P: {text}\nQ: {random.choice(choices)}")
-
-
-
+    await ctx.reply(f"/me P: {text}\nR: {random.choice(choices)}")
 
 
 
